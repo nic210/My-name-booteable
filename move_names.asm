@@ -4,30 +4,39 @@
 ; Ensamblador: NASM/SASM
 ; Plataforma: DOS (Modo real)
 
-bits 16
-org 100h
+
 
 section .data
     ; Definición de las letras como matrices de bits (8x8 píxeles por letra)
-    ; Cada letra se representa en 8 bytes, cada bit es un píxel (1=encendido, 0=apagado)
+    letra_A db 0x18, 0x24, 0x42, 0x7E, 0x42, 0x42, 0x42, 0x00
+    letra_B db 0x7C, 0x42, 0x42, 0x7C, 0x42, 0x42, 0x7C, 0x00
+    letra_C db 0x3C, 0x42, 0x40, 0x40, 0x40, 0x42, 0x3C, 0x00
+    letra_D db 0x78, 0x44, 0x42, 0x42, 0x42, 0x44, 0x78, 0x00
+    letra_E db 0x7E, 0x40, 0x40, 0x7C, 0x40, 0x40, 0x7E, 0x00
+    letra_I db 0x7E, 0x18, 0x18, 0x18, 0x18, 0x18, 0x7E, 0x00
+    letra_K db 0x42, 0x44, 0x48, 0x70, 0x48, 0x44, 0x42, 0x00
+    letra_L db 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x7E, 0x00
+    letra_N db 0x42, 0x62, 0x52, 0x4A, 0x46, 0x42, 0x42, 0x00
+    letra_O db 0x3C, 0x42, 0x42, 0x42, 0x42, 0x42, 0x3C, 0x00
+    letra_R db 0x7C, 0x42, 0x42, 0x7C, 0x48, 0x44, 0x42, 0x00
+    letra_V db 0x42, 0x42, 0x42, 0x42, 0x42, 0x24, 0x18, 0x00
 
-    ; Ejemplo para la letra 'A'
-    letra_A db 0x18,0x24,0x42,0x7E,0x42,0x42,0x42,0x00
-    ; Añade aquí las matrices para cada letra necesaria
-
-    ; Ejemplo para la letra 'B'
-    letra_B db 0x7C,0x42,0x42,0x7C,0x42,0x42,0x7C,0x00
-    ; Completa con las demás letras
-
-    ; Nombres de los integrantes (utilizando índices a las matrices de letras)
-    ; Supongamos que usamos un alfabeto limitado definido en 'letras'
-    nombres db 'NOMBRE1',0
-            db 'NOMBRE2',0
+    ; Nombres para mostrar
+    nombres db 'Kevin', 0, 'Nicol', 0, 'Eder', 0, 0
 
     ; Tabla de punteros a las letras
-    letras dw letra_A   ; Índice 0 - 'A'
-           dw letra_B   ; Índice 1 - 'B'
-           ; Añade aquí los punteros a las demás letras
+    letras dw letra_A  ; Índice 0 - 'A'
+           dw letra_B  ; Índice 1 - 'B'
+           dw letra_C  ; Índice 2 - 'C'
+           dw letra_D  ; Índice 3 - 'D'
+           dw letra_E  ; Índice 4 - 'E'
+           dw letra_I  ; Índice 5 - 'I'
+           dw letra_K  ; Índice 6 - 'K'
+           dw letra_L  ; Índice 7 - 'L'
+           dw letra_N  ; Índice 8 - 'N'
+           dw letra_O  ; Índice 9 - 'O'
+           dw letra_R  ; Índice 10 - 'R'
+           dw letra_V  ; Índice 11 - 'V'
 
     msg_confirmacion db 'Presiona Enter para comenzar$',0
 
@@ -189,7 +198,7 @@ generar_posicion_aleatoria:
 dibujar_nombres:
     ; Dibujar los nombres en la posición (posX, posY)
     pusha
-    mov si, nombres    ; Apuntar al inicio de los nombres
+    mov si, nombres     ; Apuntar al inicio de los nombres
     mov ax, [posX]
     mov bx, ax         ; bx = posX
     mov dx, [posY]     ; dx = posY
