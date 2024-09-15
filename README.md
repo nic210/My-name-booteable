@@ -16,8 +16,8 @@ cd My-name-booteable
 
 
 Para el .coom usa nombres acortado como game, move, run para que dosbox los encuentre facilmente
-### Crear el archivo .com
+### 2. Crear el archivo .com
 nasm -f bin -o game.com move_names.asm
 
-### Ejecutar codigo
+### 3. Ejecutar codigo
 dosbox game.com
