@@ -1,3 +1,5 @@
+[BITS 16]
+
 section .data
     ; Definir las versiones de cada nombre según las rotaciones
     ; Nombre KEVIN
