@@ -127,12 +127,20 @@ set_pos_y_min:
     jmp update_display
 
 update_display:
-    ; Limpiar la pantalla y mostrar el nombre
-    mov ah, 0x02        ; Función de BIOS para mover el cursor
-    mov bh, 0x00        ; Página de pantalla (0 para modo de texto)
-    mov dh, [y_pos]     ; Fila (0-24)
-    mov dl, [x_pos]     ; Columna (0-79)
-    int 0x10            ; Llamada a la interrupción del BIOS
+    ; Limpiar la pantalla
+    mov ah, 0x06        ; Función 0x06 de BIOS: Desplazamiento de pantalla hacia arriba
+    mov al, 0            ; Número de líneas a desplazar (0 = limpiar toda la pantalla)
+    mov bh, 0x07         ; Atributo de fondo (color blanco sobre negro)
+    mov cx, 0            ; Esquina superior izquierda (fila=0, columna=0)
+    mov dx, 184Fh        ; Esquina inferior derecha (fila=24, columna=79)
+    int 0x10             ; Llamada a la interrupción de BIOS para limpiar la pantalla
+
+    ; Mover el cursor a la nueva posición
+    mov ah, 0x02         ; Función de BIOS para mover el cursor
+    mov bh, 0x00         ; Página de pantalla (0 para modo de texto)
+    mov dh, [y_pos]      ; Fila (0-24)
+    mov dl, [x_pos]      ; Columna (0-79)
+    int 0x10             ; Llamada a la interrupción de BIOS
 
     ; Mostrar el nombre en pantalla
     mov al, [nombre_sel] ; Seleccionar el nombre a mostrar
