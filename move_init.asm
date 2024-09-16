@@ -22,12 +22,15 @@ section .data
     msg db 'Presione "d" para rotar 90 grados a la izquierda, "a" para rotar 90 grados a la derecha', 0x0D, 0x0A, '$'
     msg2 db 'Presione "w" para rotar 180 grados, "s" para rotar 180 grados en el otro sentido', 0x0D, 0x0A, '$'
     msg3 db 'Presione "1" para KEVIN, "2" para EDER, "3" para NICOL', 0x0D, 0x0A, '$'
+    msg4 db 'Presione "r" para reiniciar, "q" para salir', 0x0D, 0x0A, '$'
     newline db 0x0D, 0x0A, '$'  ; Nueva línea
 
 section .bss
     current_rotation resb 1  ; Estado de rotación
     current_name resb 1      ; Nombre seleccionado
     key resb 1               ; Variable para la tecla presionada
+    cursor_x resb 1          ; Coordenada X del cursor
+    cursor_y resb 1          ; Coordenada Y del cursor
 
 section .text
     org 0x100  ; Punto de inicio para un programa .COM en modo real de DOS
@@ -49,6 +52,9 @@ start:
     lea dx, [msg3]
     int 21h
 
+    lea dx, [msg4]
+    int 21h
+
     ; Esperar a que el usuario presione una tecla
     mov ah, 01h     ; Llamada a la función para esperar entrada de teclado
     int 21h         ; Leer el carácter presionado
@@ -65,7 +71,7 @@ start:
 main_loop:
     ; Leer la tecla presionada
     mov ah, 0x00
-    int 0x16            ; Llamada a la interrupción del BIOS para esperar una tecla
+    int 0x16
     mov [key], al
 
     ; Comprobar si la tecla es 'd' (rotación a la izquierda)
@@ -97,6 +103,24 @@ main_loop:
     ; Mostrar todos los nombres al presionar '4'
     cmp al, '4'
     je display_all_names
+
+    ; Mover cursor con teclas de flecha
+    cmp al, 0x4B  ; Flecha izquierda
+    je move_cursor_left
+    cmp al, 0x4D  ; Flecha derecha
+    je move_cursor_right
+    cmp al, 0x48  ; Flecha arriba
+    je move_cursor_up
+    cmp al, 0x50  ; Flecha abajo
+    je move_cursor_down
+
+    ; Reiniciar el programa con 'r'
+    cmp al, 'r'
+    je restart_program
+
+    ; Salir del programa con 'q'
+    cmp al, 'q'
+    je exit_program
 
     jmp main_loop       ; Si no es ninguna tecla manejada, regresar al bucle principal
 
@@ -131,13 +155,11 @@ select_nicol:
 update_display:
     call clear_screen
     call show_instructions
-    call show_current_state
-    
-    ; Generar posición aleatoria
-    call generate_random_position
+
     ; Establecer posición del cursor
     call set_cursor_position
 
+    ; Mostrar el nombre seleccionado
     call display_name
     jmp main_loop
 
@@ -157,6 +179,8 @@ show_instructions:
     mov dx, msg2
     int 0x21
     mov dx, msg3
+    int 0x21
+    mov dx, msg4
     int 0x21
     ret
 
@@ -188,30 +212,34 @@ show_current_state:
 
 set_cursor_position:
     mov ah, 0x02      ; Función 0x02: Mover cursor
+    mov bh, 0x00      ; Página de pantalla
+    mov dh, [cursor_y] ; Fila
+    mov dl, [cursor_x] ; Columna
     int 0x10          ; Llamada a la interrupción de BIOS
     ret
 
-; Función para generar una posición aleatoria (simple)
-; Esta función usa una semilla fija y la ajusta
-; Para obtener una posición pseudoaleatoria simple.
-generate_random_position:
-    ; Obtener el valor del temporizador del BIOS
-    mov ah, 0x00          ; Función para obtener el temporizador
-    int 0x1A              ; Interrupción del BIOS para obtener el temporizador
+move_cursor_left:
+    dec byte [cursor_x]
+    jmp update_display
 
-    ; Usar el valor de CL para la columna (0-79)
-    mov al, cl            ; Tomar el valor bajo del temporizador
-    mov bl, 80            ; Número de columnas en la pantalla
-    div bl                ; Dividir el valor de AL por 80 para obtener el rango de columnas
-    mov dl, al            ; Guardar el resultado de la columna en DL
+move_cursor_right:
+    inc byte [cursor_x]
+    jmp update_display
 
-    ; Usar el valor de CH para la fila (0-24)
-    mov al, ch            ; Tomar el valor alto del temporizador
-    mov bl, 25            ; Número de filas en la pantalla
-    div bl                ; Dividir el valor de AL por 25 para obtener el rango de filas
-    mov dh, al            ; Guardar el resultado de la fila en DH
+move_cursor_up:
+    dec byte [cursor_y]
+    jmp update_display
 
-    ret
+move_cursor_down:
+    inc byte [cursor_y]
+    jmp update_display
+
+restart_program:
+    jmp start
+
+exit_program:
+    mov ah, 0x4C
+    int 0x21
 
 display_name:
     call clear_screen
@@ -267,24 +295,28 @@ display_kevin:
     ret
 
 show_kevin_original:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, kevin_original
     int 0x21
     ret
 
 show_kevin_left:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, kevin_left
     int 0x21
     ret
 
 show_kevin_right:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, kevin_right
     int 0x21
     ret
 
 show_kevin_180:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, kevin_180
     int 0x21
@@ -303,24 +335,28 @@ display_eder:
     ret
 
 show_eder_original:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, eder_original
     int 0x21
     ret
 
 show_eder_left:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, eder_left
     int 0x21
     ret
 
 show_eder_right:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, eder_right
     int 0x21
     ret
 
 show_eder_180:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, eder_180
     int 0x21
@@ -340,24 +376,28 @@ display_nicol:
     ret
 
 show_nicol_original:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, nicol_original
     int 0x21
     ret
 
 show_nicol_left:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, nicol_left
     int 0x21
     ret
 
 show_nicol_right:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, nicol_right
     int 0x21
     ret
 
 show_nicol_180:
+    call set_cursor_position
     mov ah, 0x09
     mov dx, nicol_180
     int 0x21
