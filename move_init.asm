@@ -22,8 +22,6 @@ section .data
     msg db 'Presione "d" para rotar 90 grados a la izquierda, "a" para rotar 90 grados a la derecha', 0x0D, 0x0A, '$'
     msg2 db 'Presione "w" para rotar 180 grados, "s" para rotar 180 grados en el otro sentido', 0x0D, 0x0A, '$'
     msg3 db 'Presione "1" para KEVIN, "2" para EDER, "3" para NICOL', 0x0D, 0x0A, '$'
-    current_rotation_msg db 'Rotacion actual: $'
-    current_name_msg db 'Nombre actual: $'
     newline db 0x0D, 0x0A, '$'  ; Nueva línea
 
 section .bss
@@ -39,6 +37,22 @@ start:
     mov ah, 0x00
     mov al, 0x03
     int 0x10
+
+    ; Mostrar mensajes iniciales
+    mov ah, 09h
+    lea dx, [msg]
+    int 21h
+
+    lea dx, [msg2]
+    int 21h
+
+    lea dx, [msg3]
+    int 21h
+
+    ; Esperar a que el usuario presione una tecla
+    mov ah, 01h     ; Llamada a la función para esperar entrada de teclado
+    int 21h         ; Leer el carácter presionado
+    ; AL ya contiene la tecla presionada, úsala según la lógica que necesites
 
     ; Inicializar estado de rotación y nombre
     mov byte [current_rotation], 0  ; Sin rotación
@@ -70,7 +84,19 @@ main_loop:
     cmp al, 's'
     je rotate_original
 
-    ; [El resto de las comprobaciones de teclas permanecen iguales]
+    ; Seleccionar nombres
+    cmp al, '1'
+    je select_kevin
+
+    cmp al, '2'
+    je select_eder
+
+    cmp al, '3'
+    je select_nicol
+
+    ; Mostrar todos los nombres al presionar '4'
+    cmp al, '4'
+    je display_all_names
 
     jmp main_loop       ; Si no es ninguna tecla manejada, regresar al bucle principal
 
@@ -106,6 +132,12 @@ update_display:
     call clear_screen
     call show_instructions
     call show_current_state
+    
+    ; Generar posición aleatoria
+    call generate_random_position
+    ; Establecer posición del cursor
+    call set_cursor_position
+
     call display_name
     jmp main_loop
 
@@ -129,9 +161,6 @@ show_instructions:
     ret
 
 show_current_state:
-    mov ah, 0x09
-    mov dx, current_rotation_msg
-    int 0x21
     
     mov al, [current_rotation]
     add al, '0'
@@ -144,9 +173,6 @@ show_current_state:
     mov dl, 0x0A
     int 0x21
     
-    mov ah, 0x09
-    mov dx, current_name_msg
-    int 0x21
     
     mov al, [current_name]
     add al, '0'
@@ -160,7 +186,36 @@ show_current_state:
     int 0x21
     ret
 
+set_cursor_position:
+    mov ah, 0x02      ; Función 0x02: Mover cursor
+    int 0x10          ; Llamada a la interrupción de BIOS
+    ret
+
+; Función para generar una posición aleatoria (simple)
+; Esta función usa una semilla fija y la ajusta
+; Para obtener una posición pseudoaleatoria simple.
+generate_random_position:
+    ; Obtener el valor del temporizador del BIOS
+    mov ah, 0x00          ; Función para obtener el temporizador
+    int 0x1A              ; Interrupción del BIOS para obtener el temporizador
+
+    ; Usar el valor de CL para la columna (0-79)
+    mov al, cl            ; Tomar el valor bajo del temporizador
+    mov bl, 80            ; Número de columnas en la pantalla
+    div bl                ; Dividir el valor de AL por 80 para obtener el rango de columnas
+    mov dl, al            ; Guardar el resultado de la columna en DL
+
+    ; Usar el valor de CH para la fila (0-24)
+    mov al, ch            ; Tomar el valor alto del temporizador
+    mov bl, 25            ; Número de filas en la pantalla
+    div bl                ; Dividir el valor de AL por 25 para obtener el rango de filas
+    mov dh, al            ; Guardar el resultado de la fila en DH
+
+    ret
+
 display_name:
+    call clear_screen
+    
     mov al, [current_name]
     cmp al, 1
     je display_kevin
@@ -169,6 +224,35 @@ display_name:
     cmp al, 3
     je display_nicol
     ret
+
+display_all_names:
+    call clear_screen  ; Limpiar pantalla
+
+    ; Mostrar "KEVIN"
+    mov ah, 0x09
+    mov dx, kevin_original
+    int 0x21
+    ; Salto de línea
+    mov dx, newline
+    int 0x21
+
+    ; Mostrar "EDER"
+    mov ah, 0x09
+    mov dx, eder_original
+    int 0x21
+    ; Salto de línea
+    mov dx, newline
+    int 0x21
+
+    ; Mostrar "NICOL"
+    mov ah, 0x09
+    mov dx, nicol_original
+    int 0x21
+    ; Salto de línea
+    mov dx, newline
+    int 0x21
+
+    jmp main_loop  ; Volver al bucle principal
 
 display_kevin:
     mov al, [current_rotation]
@@ -241,6 +325,7 @@ show_eder_180:
     mov dx, eder_180
     int 0x21
     ret
+
 
 display_nicol:
     mov al, [current_rotation]
