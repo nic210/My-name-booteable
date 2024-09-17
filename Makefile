@@ -1,18 +1,42 @@
-# Target por defecto
-all: myname.bin
+# Nombre de los archivos
+BOOTLOADER = b.asm
+HELLO = hello.asm
+BOOTLOADER_BIN = b.bin
+HELLO_BIN = hello.bin
+DISK_IMG = disk.img
 
-# Combina el bootloader y el juego en un archivo binario
-myname.bin: bootloader.bin myname.com
-	cat bootloader.bin myname.com > myname.bin
+# Ensamblador
+NASM = nasm
 
-# Compila el bootloader
-bootloader.bin: bootloader.asm
-	nasm -f bin -o bootloader.bin bootloader.asm
+# Opciones de NASM
+NASMFLAGS = -f bin
 
-# Compila el juego
-myname.com: myname.asm
-	nasm -f bin -o myname.com myname.asm
+# QEMU
+QEMU = qemu-system-x86_64
 
-# Limpia los archivos generados
+# Reglas
+all: run
+
+# Compilar el bootloader
+$(BOOTLOADER_BIN): $(BOOTLOADER)
+	$(NASM) $(NASMFLAGS) -o $@ $<
+
+# Compilar el programa hello
+$(HELLO_BIN): $(HELLO)
+	$(NASM) $(NASMFLAGS) -o $@ $<
+
+# Crear la imagen de disco y escribir los binarios en ella
+$(DISK_IMG): $(BOOTLOADER_BIN) $(HELLO_BIN)
+	dd if=/dev/zero of=$(DISK_IMG) bs=512 count=2880
+	dd if=$(BOOTLOADER_BIN) of=$(DISK_IMG) bs=512 count=1 conv=notrunc
+	dd if=$(HELLO_BIN) of=$(DISK_IMG) bs=512 seek=1 count=1 conv=notrunc
+
+# Ejecutar con QEMU
+run: $(DISK_IMG)
+	$(QEMU) -fda $(DISK_IMG)
+
+# Limpiar archivos generados
 clean:
-	rm -f *.bin *.com
+	rm -f $(BOOTLOADER_BIN) $(HELLO_BIN) $(DISK_IMG)
+
+.PHONY: all run clean
