@@ -1,8 +1,8 @@
 # Nombre de los archivos
-BOOTLOADER = b.asm
-HELLO = hello.asm
-BOOTLOADER_BIN = b.bin
-HELLO_BIN = hello.bin
+BOOTLOADER = boot.asm
+HELLO = main.asm
+BOOTLOADER_BIN = boot.bin
+HELLO_BIN = main.bin
 DISK_IMG = disk.img
 
 # Ensamblador
